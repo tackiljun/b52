@@ -13,24 +13,24 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @RequestMapping("/member")
 public class MemberController {
-    
-    @PreAuthorize("permitAll")
-    @GetMapping("/signup")
-    public void signup() {
-        log.info("----------signup----------");
-    }
+  
+  @PreAuthorize("permitAll")
+  @GetMapping("/signup")
+  public void signup(){
+    log.info("----------signup----------");
+  }
 
-    @PreAuthorize("hasRole('USER')")
-    @GetMapping("/mypage")
-    public void mypage() {
-        log.info("----------mypage----------");
-    }
+  @PreAuthorize("hasAnyRole('USER','ADMIN')")
+  @GetMapping("/mypage")
+  public void mypage(){
+    log.info("----------mypage----------");
+  }
 
-    @PreAuthorize("permitAll")
-    @GetMapping("/signin")
-    public void signin() {
-        log.info("----------signin----------");
-    }
+  @PreAuthorize("permitAll")
+  @GetMapping("/signin")
+    public void signin(){
+    log.info("----------signin----------");
+  }
 
 
 }

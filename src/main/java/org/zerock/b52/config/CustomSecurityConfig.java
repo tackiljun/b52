@@ -1,7 +1,5 @@
 package org.zerock.b52.config;
 
-import java.io.ObjectInputFilter.Config;
-
 import javax.sql.DataSource;
 
 import org.springframework.context.annotation.Bean;
@@ -14,10 +12,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
+import org.zerock.b52.security.CustomOAuth2UserService;
+import org.zerock.b52.security.handler.CustomAccessDeniedHandler;
+import org.zerock.b52.security.handler.CustomOauthSuccessHandler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
+// 설정파일 대신 사용 Configuration.
 @Configuration
 @Log4j2
 @EnableMethodSecurity
@@ -26,28 +28,30 @@ public class CustomSecurityConfig {
 
     private final DataSource dataSource;
 
+    private final CustomOAuth2UserService oCustomOAuth2UserService;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public PersistentTokenRepository persistentTokenRepository() {
-        JdbcTokenRepositoryImpl repo = new JdbcTokenRepositoryImpl();
-        repo.setDataSource(dataSource);
-        return repo;
-    }
-
+    // step1 설정.
     @Bean
     public SecurityFilterChain filterChain(final HttpSecurity http) throws Exception {
 
-        log.info("===============filter chain===============");
+        log.info("----------Filter Chain----------");
 
         //http.formLogin(Customizer.withDefaults());
-        // /login 경로를 줬을때 로그인페이지가 뜬다.
-        http.formLogin(Config -> {
-            Config.loginPage("/member/signin");
+        // /login 경로 로그인 페이지 띄우기, 람다식.
+
+        http.formLogin(config -> {
+            config.loginPage("/member/signin");
+            
         });
+
+        http.exceptionHandling(
+            config -> config.accessDeniedHandler(new CustomAccessDeniedHandler())
+        );
 
         http.rememberMe(config -> {
         config.tokenRepository(persistentTokenRepository());
@@ -57,8 +61,22 @@ public class CustomSecurityConfig {
         http.csrf(config -> {
             config.disable();
         });
-    
+
+        http.oauth2Login(config -> {
+            config.loginPage("/member/signin");
+            config.successHandler(new CustomOauthSuccessHandler());
+            
+        });
+
+
         return http.build();
     }
-    
+
+    @Bean
+    public PersistentTokenRepository persistentTokenRepository() {
+        JdbcTokenRepositoryImpl repo = new JdbcTokenRepositoryImpl();
+        repo.setDataSource(dataSource);
+        return repo;
+    }
+
 }
